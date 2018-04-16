@@ -1,11 +1,9 @@
 'use strict';
 
 const authorize = require('../authentication/lib/handlers/authorizeHandler');
-const slsAuth = require('serverless-authentication');
+const { utils, config } = require('serverless-authentication');
 
-const utils = slsAuth.utils;
-const config = slsAuth.config;
-const expect = require('chai').expect;
+const { expect } = require('chai');
 
 describe('Authorization', () => {
   describe('Authorize', () => {

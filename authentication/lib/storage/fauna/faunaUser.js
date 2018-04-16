@@ -11,15 +11,18 @@ const client = new faunadb.Client(config);
 const saveUser = (profile) => {
   // profile class: https://github.com/laardee/serverless-authentication/blob/master/src/profile.js
   if (!(profile && profile.userId)) {
-    return Promise.reject('Invalid profile');
+    return Promise.reject(new Error('Invalid profile'));
   }
-  return client.query(
-  q.Let({ matchRef: q.Match(q.Index('auth_userId'), profile.userId) },
-    q.If(q.Exists(q.Var('matchRef')),
+  return client.query(q.Let(
+    { matchRef: q.Match(q.Index('auth_userId'), profile.userId) },
+    q.If(
+      q.Exists(q.Var('matchRef')),
       q.Update(q.Select('ref', q.Get(q.Var('matchRef'))), { data: profile }),
-      q.Create(q.Class(userClassName), { data: profile }))))
-  .then(result => client.query(q.Create(q.Ref('tokens'), { instance: result.ref }))
-  .then(key => ({ faunadb: key.secret })));
+      q.Create(q.Class(userClassName), { data: profile })
+    )
+  ))
+    .then(result => client.query(q.Create(q.Ref('tokens'), { instance: result.ref }))
+      .then(key => ({ faunadb: key.secret })));
 };
 
 // call this with `serverless invoke -f schema` before anything else

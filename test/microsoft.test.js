@@ -3,13 +3,10 @@
 const signinHandler = require('../authentication/lib/handlers/signinHandler');
 const callbackHandler = require('../authentication/lib/handlers/callbackHandler');
 const refreshHandler = require('../authentication/lib/handlers/refreshHandler');
-const slsAuth = require('serverless-authentication');
-
-const utils = slsAuth.utils;
-const config = slsAuth.config;
+const { utils, config } = require('serverless-authentication');
 
 const nock = require('nock');
-const expect = require('chai').expect;
+const { expect } = require('chai');
 const url = require('url');
 const defaultEvent = require('./event.json');
 
@@ -52,12 +49,15 @@ describe('Authentication Provider', () => {
         }
       });
 
-      signinHandler(event, { succeed: (data) => {
-        const query = url.parse(data.headers.Location, true).query;
-        state = query.state;
-        expect(data.headers.Location).to.match(/https:\/\/login\.live\.com\/oauth20_authorize\.srf\?client_id=ms-mock-id&redirect_uri=https:\/\/api-id\.execute-api\.eu-west-1\.amazonaws\.com\/dev\/authentication\/callback\/microsoft&response_type=code&scope=wl\.basic wl\.emails&state=.{64}/);
-        done(null);
-      } });
+      signinHandler(event, {
+        succeed: (data) => {
+          const { query } = url.parse(data.headers.Location, true);
+          const queryState = query.state;
+          state = queryState;
+          expect(data.headers.Location).to.match(/https:\/\/login\.live\.com\/oauth20_authorize\.srf\?client_id=ms-mock-id&redirect_uri=https:\/\/api-id\.execute-api\.eu-west-1\.amazonaws\.com\/dev\/authentication\/callback\/microsoft&response_type=code&scope=wl\.basic wl\.emails&state=.{64}/);
+          done(null);
+        }
+      });
     });
 
     it('should return local client url', (done) => {
@@ -72,16 +72,18 @@ describe('Authentication Provider', () => {
       });
 
       const providerConfig = config(event);
-      callbackHandler(event, { succeed: (data) => {
-        const query = url.parse(data.headers.Location, true).query;
-        refreshToken = query.refresh_token;
-        expect(query.authorization_token).to.match(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/);
-        expect(refreshToken).to.match(/[A-Fa-f0-9]{64}/);
-        const tokenData = utils.readToken(query.authorization_token, providerConfig.token_secret);
-        expect(tokenData.id)
-          .to.equal('0bc293b1bf8b932f7a996605f13aae28011f45a933abb48d10b693b8edfc5b34');
-        done(null);
-      } });
+      callbackHandler(event, {
+        succeed: (data) => {
+          const { query } = url.parse(data.headers.Location, true);
+          refreshToken = query.refresh_token;
+          expect(query.authorization_token).to.match(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/);
+          expect(refreshToken).to.match(/[A-Fa-f0-9]{64}/);
+          const tokenData = utils.readToken(query.authorization_token, providerConfig.token_secret);
+          expect(tokenData.id)
+            .to.equal('0bc293b1bf8b932f7a996605f13aae28011f45a933abb48d10b693b8edfc5b34');
+          done(null);
+        }
+      });
     });
 
     it('should get new authorization token', () => {

@@ -88,7 +88,7 @@ const revokeState = state => new Promise((resolve, reject) => {
     .then(insertToken)
     .then((token) => {
       if (state !== token) {
-        reject('State mismatch');
+        reject(new Error('State mismatch'));
       }
       resolve(token);
     })
@@ -146,8 +146,8 @@ const revokeRefreshToken = oldToken => new Promise((resolve, reject) => {
     };
 
     const newRefreshToken = (data) => {
-      const userId = data.Items[0].userId;
-      const payload = data.Items[0].payload;
+      const { userId, payload } = data.Items[0];
+
       const params = {
         TableName: table,
         Item: {
@@ -183,10 +183,14 @@ const revokeRefreshToken = oldToken => new Promise((resolve, reject) => {
     queryToken().then(data =>
       newRefreshToken(data)
         .then(expireRefreshToken)
-        .then(id => resolve({ id, token, payload: data.payload && JSON.parse(data.payload) }))
-    ).catch(reject);
+        .then(id => resolve({
+          id,
+          token,
+          payload: data.payload && JSON.parse(data.payload)
+        })))
+      .catch(reject);
   } else {
-    reject('Invalid token');
+    reject(new Error('Invalid token'));
   }
 });
 

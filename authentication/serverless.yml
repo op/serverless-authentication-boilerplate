@@ -1,4 +1,4 @@
-frameworkVersion: ">=1.2.0 <2.0.0"
+frameworkVersion: ">=1.26.1 <2.0.0"
 
 service: serverless-authentication # change this
 
@@ -22,7 +22,7 @@ provider:
       Action:
       - cognito-idp:*
       Resource: arn:aws:cognito-idp:*:*:*
-  runtime: nodejs4.3
+  runtime: nodejs8.10
 
 package:
   exclude:

@@ -1,10 +1,7 @@
 'use strict';
 
 // Config
-const slsAuth = require('serverless-authentication');
-
-const config = slsAuth.config;
-const utils = slsAuth.utils;
+const { config, utils } = require('serverless-authentication');
 
 // Providers
 const facebook = require('serverless-authentication-facebook');
@@ -17,10 +14,7 @@ const crypto = require('crypto');
 const cache = require('../storage/cacheStorage');
 const users = require('../storage/usersStorage');
 
-const helpers = require('../helpers');
-
-const createResponseData = helpers.createResponseData;
-const redirectProxyCallback = helpers.redirectProxyCallback;
+const { createResponseData, redirectProxyCallback } = require('../helpers');
 
 function createUserId(data, secret) {
   const hmac = crypto.createHmac('sha256', secret);
@@ -90,7 +84,8 @@ function callbackHandler(proxyEvent, context) {
               if (typeof userContext === 'object' && !Array.isArray(userContext)) {
                 data.authorizationToken.payload = Object.assign(
                   data.authorizationToken.payload || {},
-                  userContext);
+                  userContext
+                );
               }
               return cache.saveRefreshToken(id, data.authorizationToken.payload);
             }).then(result => tokenResponse(Object.assign(data, { refreshToken: result })))

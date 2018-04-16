@@ -1,10 +1,7 @@
 'use strict';
 
 // Config
-const slsAuth = require('serverless-authentication');
-
-const config = slsAuth.config;
-const utils = slsAuth.utils;
+const { config, utils } = require('serverless-authentication');
 
 const policyContext = (data) => {
   const context = {};
@@ -21,7 +18,7 @@ const authorize = (event, callback) => {
   const stage = event.methodArn.split('/')[1] || 'dev'; // @todo better implementation
   let error = null;
   let policy;
-  const authorizationToken = event.authorizationToken;
+  const { authorizationToken } = event;
   if (authorizationToken) {
     try {
       // this example uses simple expiration time validation

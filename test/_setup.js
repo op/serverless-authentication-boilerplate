@@ -3,7 +3,7 @@
 const chai = require('chai');
 const dynamo = require('./dynamo');
 
-const expect = chai.expect;
+const { expect } = chai;
 
 process.env.CACHE_DB_NAME = 'dev-serverless-authentication-cache';
 process.env.REDIRECT_CLIENT_URI = 'http://127.0.0.1:3000/';

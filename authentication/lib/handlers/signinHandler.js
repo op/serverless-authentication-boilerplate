@@ -1,10 +1,7 @@
 'use strict';
 
 // Config
-const slsAuth = require('serverless-authentication');
-
-const config = slsAuth.config;
-const utils = slsAuth.utils;
+const { config, utils } = require('serverless-authentication');
 
 // Providers
 const facebook = require('serverless-authentication-facebook');
@@ -15,7 +12,7 @@ const customGoogle = require('../custom-google');
 // Common
 const cache = require('../storage/cacheStorage');
 
-const redirectProxyCallback = require('../helpers').redirectProxyCallback;
+const { redirectProxyCallback } = require('../helpers');
 
 /**
  * Sign In Handler
@@ -35,25 +32,33 @@ function signinHandler(proxyEvent, context) {
     .then((state) => {
       switch (event.provider) {
         case 'facebook':
-          facebook.signinHandler(providerConfig, { scope: 'email', state },
-            (err, data) => redirectProxyCallback(context, data));
+          facebook.signinHandler(
+            providerConfig, { scope: 'email', state },
+            (err, data) => redirectProxyCallback(context, data)
+          );
           break;
         case 'google':
-          google.signinHandler(providerConfig, { scope: 'profile email', state },
-            (err, data) => redirectProxyCallback(context, data));
+          google.signinHandler(
+            providerConfig, { scope: 'profile email', state },
+            (err, data) => redirectProxyCallback(context, data)
+          );
           break;
         case 'microsoft':
-          microsoft.signinHandler(providerConfig, { scope: 'wl.basic wl.emails', state },
-            (err, data) => redirectProxyCallback(context, data));
+          microsoft.signinHandler(
+            providerConfig, { scope: 'wl.basic wl.emails', state },
+            (err, data) => redirectProxyCallback(context, data)
+          );
           break;
         case 'custom-google':
           // See ./customGoogle.js
-          customGoogle.signinHandler(providerConfig, { state },
-            (err, data) => redirectProxyCallback(context, data));
+          customGoogle.signinHandler(
+            providerConfig, { state },
+            (err, data) => redirectProxyCallback(context, data)
+          );
           break;
         default:
-          utils.errorResponse({
-            error: `Invalid provider: ${event.provider}` },
+          utils.errorResponse(
+            { error: `Invalid provider: ${event.provider}` },
             providerConfig,
             (err, data) => redirectProxyCallback(context, data)
           );

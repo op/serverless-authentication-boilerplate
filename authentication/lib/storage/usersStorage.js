@@ -9,7 +9,7 @@ const faunaUser = require('./fauna/faunaUser');
 
 const saveUser = (profile) => {
   if (!profile) {
-    return Promise.reject('Invalid profile');
+    return Promise.reject(new Error('Invalid profile'));
   }
   // Here you can save the profile to DynamoDB,
   // FaunaDB, AWS Cognito or where ever you wish,

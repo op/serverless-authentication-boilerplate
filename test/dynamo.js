@@ -13,7 +13,7 @@ const env = YAML.load(fs.readFileSync('./authentication/serverless.yml').toStrin
 const resources = env.resources.Resources;
 
 const async = require('async');
-const DynamoDB = require('aws-sdk').DynamoDB;
+const { DynamoDB } = require('aws-sdk');
 
 const db = new DynamoDB({ endpoint, region });
 
