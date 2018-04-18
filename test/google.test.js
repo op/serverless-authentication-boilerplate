@@ -14,14 +14,18 @@ describe('Authentication Provider', () => {
   describe('Google', () => {
     before(() => {
       const googleConfig = config(Object.assign({}, defaultEvent, { provider: 'google' }));
+      const payload = {
+        client_id: 'g-mock-id',
+        redirect_uri: 'https://api-id.execute-api.eu-west-1.amazonaws.com/dev/authentication/callback/google',
+        client_secret: 'g-mock-secret',
+        code: 'code',
+        grant_type: 'authorization_code'
+      };
       nock('https://www.googleapis.com')
-        .post('/oauth2/v4/token')
-        .query({
-          client_id: googleConfig.id,
-          redirect_uri: googleConfig.redirect_uri,
-          client_secret: googleConfig.secret,
-          code: 'code'
-        })
+        .post('/oauth2/v4/token',
+          Object.keys(payload).reduce((result, key) => {
+            return result.concat(`${key}=${encodeURIComponent(payload[key])}`);
+          }, []).join('&'))
         .reply(200, {
           access_token: 'access-token-123'
         });

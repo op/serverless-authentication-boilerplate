@@ -14,14 +14,18 @@ describe('Authentication Provider', () => {
   describe('Microsoft', () => {
     before(() => {
       const providerConfig = config(Object.assign({}, defaultEvent, { provider: 'microsoft' }));
+      const payload = {
+        client_id: providerConfig.id,
+        redirect_uri: providerConfig.redirect_uri,
+        client_secret: providerConfig.secret,
+        code: 'code',
+        grant_type: 'authorization_code'
+      };
       nock('https://login.live.com')
-        .post('/oauth20_token.srf')
-        .query({
-          client_id: providerConfig.id,
-          redirect_uri: providerConfig.redirect_uri,
-          client_secret: providerConfig.secret,
-          code: 'code'
-        })
+        .post('/oauth20_token.srf',
+          Object.keys(payload).reduce((result, key) => {
+            return result.concat(`${key}=${encodeURIComponent(payload[key])}`);
+          }, []).join('&'))
         .reply(200, {
           access_token: 'access-token-123'
         });
@@ -55,7 +59,7 @@ describe('Authentication Provider', () => {
           const queryState = query.state;
           state = queryState;
           expect(data.headers.Location).to.match(/https:\/\/login\.live\.com\/oauth20_authorize\.srf\?client_id=ms-mock-id&redirect_uri=https:\/\/api-id\.execute-api\.eu-west-1\.amazonaws\.com\/dev\/authentication\/callback\/microsoft&response_type=code&scope=wl\.basic wl\.emails&state=.{64}/);
-          done(null);
+          return done(null);
         }
       });
     });
@@ -95,7 +99,6 @@ describe('Authentication Provider', () => {
         expect(error).to.be.null;
         expect(data.authorization_token).to.match(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/);
         expect(data.refresh_token).to.match(/[A-Fa-f0-9]{64}/);
-        expect(data.id).to.equal(event.id);
       });
     });
   });
