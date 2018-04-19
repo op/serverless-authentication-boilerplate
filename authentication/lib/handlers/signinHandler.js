@@ -61,10 +61,10 @@ async function signinHandler(proxyEvent, context) {
     }
   } catch (exception) {
     return utils.errorResponse(
-      { error },
+      { exception },
       providerConfig,
       (err, data) => redirectProxyCallback(context, data)
-    )
+    );
   }
 }
 

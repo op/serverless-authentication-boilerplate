@@ -35,7 +35,7 @@ async function refreshHandler(event, callback) {
       );
     return callback(null, { authorization_token, refresh_token: data.refreshToken, id });
   } catch (exception) {
-    return callback(JSON.stringify(exception))
+    return callback(JSON.stringify(exception));
   }
 }
 
