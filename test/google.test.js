@@ -13,19 +13,20 @@ const defaultEvent = require('./event.json');
 describe('Authentication Provider', () => {
   describe('Google', () => {
     before(() => {
-      const googleConfig = config(Object.assign({}, defaultEvent, { provider: 'google' }));
+      const providerConfig = config(Object.assign({}, defaultEvent, { provider: 'google' }));
       const payload = {
-        client_id: 'g-mock-id',
-        redirect_uri: 'https://api-id.execute-api.eu-west-1.amazonaws.com/dev/authentication/callback/google',
-        client_secret: 'g-mock-secret',
+        client_id: providerConfig.id,
+        redirect_uri: providerConfig.redirect_uri,
+        client_secret: providerConfig.secret,
         code: 'code',
         grant_type: 'authorization_code'
       };
       nock('https://www.googleapis.com')
-        .post('/oauth2/v4/token',
-          Object.keys(payload).reduce((result, key) => {
-            return result.concat(`${key}=${encodeURIComponent(payload[key])}`);
-          }, []).join('&'))
+        .post(
+          '/oauth2/v4/token',
+          Object.keys(payload).reduce((result, key) =>
+            result.concat(`${key}=${encodeURIComponent(payload[key])}`), []).join('&')
+        )
         .reply(200, {
           access_token: 'access-token-123'
         });

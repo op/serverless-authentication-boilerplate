@@ -11,20 +11,21 @@ const { utils, config } = require('serverless-authentication');
 
 describe('Authentication Provider', () => {
   before(() => {
-    const googleConfig = config(Object.assign({}, defaultEvent, { provider: 'custom-google' }));
+    const providerConfig = config(Object.assign({}, defaultEvent, { provider: 'custom-google' }));
     const payload = {
-      client_id: googleConfig.id,
-      redirect_uri: googleConfig.redirect_uri,
-      client_secret: googleConfig.secret,
+      client_id: providerConfig.id,
+      redirect_uri: providerConfig.redirect_uri,
+      client_secret: providerConfig.secret,
       code: 'code',
       grant_type: 'authorization_code'
     };
 
     nock('https://www.googleapis.com')
-      .post('/oauth2/v4/token',
-        Object.keys(payload).reduce((result, key) => {
-          return result.concat(`${key}=${encodeURIComponent(payload[key])}`);
-        }, []).join('&'))
+      .post(
+        '/oauth2/v4/token',
+        Object.keys(payload).reduce((result, key) =>
+          result.concat(`${key}=${encodeURIComponent(payload[key])}`), []).join('&')
+      )
       .reply(200, {
         access_token: 'access-token-123'
       });

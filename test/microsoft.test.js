@@ -22,10 +22,11 @@ describe('Authentication Provider', () => {
         grant_type: 'authorization_code'
       };
       nock('https://login.live.com')
-        .post('/oauth20_token.srf',
-          Object.keys(payload).reduce((result, key) => {
-            return result.concat(`${key}=${encodeURIComponent(payload[key])}`);
-          }, []).join('&'))
+        .post(
+          '/oauth20_token.srf',
+          Object.keys(payload).reduce((result, key) =>
+            result.concat(`${key}=${encodeURIComponent(payload[key])}`), []).join('&')
+        )
         .reply(200, {
           access_token: 'access-token-123'
         });
