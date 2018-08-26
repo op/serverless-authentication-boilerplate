@@ -5,15 +5,15 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "decamelize": "^2.0.0",
-    "faunadb": "^2.0.0",
-    "log4js": "^2.5.3",
-    "serverless-authentication": "^0.5.0",
-    "serverless-authentication-facebook": "^0.3.2",
-    "serverless-authentication-google": "^0.4.0",
-    "serverless-authentication-microsoft": "^0.3.2"
+    "faunadb": "^2.5.0",
+    "log4js": "^3.0.5",
+    "serverless-authentication": "^0.6.3",
+    "serverless-authentication-facebook": "^0.6.0",
+    "serverless-authentication-google": "^0.6.0",
+    "serverless-authentication-microsoft": "^0.6.0"
   },
   "devDependencies": {
-    "chalk": "^2.3.2",
-    "lodash": "^4.17.5"
+    "chalk": "^2.4.1",
+    "lodash": "^4.17.10"
   }
 }

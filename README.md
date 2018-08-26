@@ -108,7 +108,7 @@ To use FaunaDB to save user data. First [create a database here](https://fauna.c
 
 1. configure `FAUNADB_SECRET` in `authentication/env.yml` with a server secret for your database
 2. uncomment `return faunaUser.saveUser(profile);` from `authentication/lib/storage/usersStorage.js`
-3. change the last line of  `authentication/lib/storage/cacheStorage.js` to `exports = module.exports = faunaCache;`
+3. change the last line of  `authentication/lib/storage/cacheStorage.js` to `module.exports = faunaCache;`
 4. Run `serverless deploy` and then `serverless invoke -f schema`
 
 To use DynamoBD to save user data:

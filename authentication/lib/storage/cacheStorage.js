@@ -1,6 +1,6 @@
-'use strict';
 
-const faunaCache = require('./fauna/faunaCache');
-const dynamoCache = require('./dynamo/dynamoCache');
 
-exports = module.exports = dynamoCache;
+const faunaCache = require('./fauna/faunaCache')
+const dynamoCache = require('./dynamo/dynamoCache')
+
+module.exports = dynamoCache
