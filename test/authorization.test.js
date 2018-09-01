@@ -1,29 +1,32 @@
-'use strict';
+const { utils, config } = require('serverless-authentication')
 
-const authorize = require('../authentication/lib/handlers/authorizeHandler');
-const slsAuth = require('serverless-authentication');
-
-const utils = slsAuth.utils;
-const config = slsAuth.config;
-const expect = require('chai').expect;
+const authorize = require('../authentication/lib/handlers/authorizeHandler')
 
 describe('Authorization', () => {
+  beforeAll(() => {
+    process.env.STAGE = 'dev'
+    process.env.CACHE_DB_NAME = 'dev-serverless-authentication-cache'
+    process.env.REDIRECT_CLIENT_URI = 'http://127.0.0.1:3000/'
+    process.env.TOKEN_SECRET = 'token-secret-123'
+  })
+
   describe('Authorize', () => {
-    it('should return policy', (done) => {
-      const payload = { id: 'username-123' };
-      const providerConfig = config({ provider: '', stage: 'dev' });
-      const authorizationToken = utils.createToken(payload, providerConfig.token_secret);
+    it('should return policy', async () => {
+      const payload = { id: 'username-123' }
+      const providerConfig = config({ provider: '', stage: 'dev' })
+      const authorizationToken = utils.createToken(
+        payload,
+        providerConfig.token_secret
+      )
       const event = {
         type: 'TOKEN',
         authorizationToken,
-        methodArn: 'arn:aws:execute-api:<regionId>:<accountId>:<apiId>/dev/<method>/<resourcePath>'
-      };
+        methodArn:
+          'arn:aws:execute-api:<regionId>:<accountId>:<apiId>/dev/<method>/<resourcePath>'
+      }
 
-      authorize(event, (error, data) => {
-        expect(error).to.be.null;
-        expect(data.principalId).to.be.equal(payload.id);
-        done(error);
-      });
-    });
-  });
-});
+      const data = await authorize(event)
+      expect(data.principalId).toBe(payload.id)
+    })
+  })
+})

@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "faunadb": "^0.2.2"
+    "faunadb": "^2.5.0"
   }
 }

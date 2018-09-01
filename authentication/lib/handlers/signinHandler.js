@@ -1,70 +1,68 @@
-'use strict';
-
 // Config
-const slsAuth = require('serverless-authentication');
-
-const config = slsAuth.config;
-const utils = slsAuth.utils;
+const { config, utils } = require('serverless-authentication')
 
 // Providers
-const facebook = require('serverless-authentication-facebook');
-const google = require('serverless-authentication-google');
-const microsoft = require('serverless-authentication-microsoft');
-const customGoogle = require('../custom-google');
+const facebook = require('serverless-authentication-facebook')
+const google = require('serverless-authentication-google')
+const microsoft = require('serverless-authentication-microsoft')
+const customGoogle = require('../custom-google')
 
 // Common
-const cache = require('../storage/cacheStorage');
-
-const redirectProxyCallback = require('../helpers').redirectProxyCallback;
+const cache = require('../storage/cacheStorage')
 
 /**
- * Sign In Handler
+ * Signin Handler
  * @param proxyEvent
  * @param context
  */
-function signinHandler(proxyEvent, context) {
+async function signinHandler(proxyEvent) {
   const event = {
     provider: proxyEvent.pathParameters.provider,
     stage: proxyEvent.requestContext.stage,
     host: proxyEvent.headers.Host
-  };
-
-  const providerConfig = config(event);
-
-  cache.createState()
-    .then((state) => {
-      switch (event.provider) {
-        case 'facebook':
-          facebook.signinHandler(providerConfig, { scope: 'email', state },
-            (err, data) => redirectProxyCallback(context, data));
-          break;
-        case 'google':
-          google.signinHandler(providerConfig, { scope: 'profile email', state },
-            (err, data) => redirectProxyCallback(context, data));
-          break;
-        case 'microsoft':
-          microsoft.signinHandler(providerConfig, { scope: 'wl.basic wl.emails', state },
-            (err, data) => redirectProxyCallback(context, data));
-          break;
-        case 'custom-google':
-          // See ./customGoogle.js
-          customGoogle.signinHandler(providerConfig, { state },
-            (err, data) => redirectProxyCallback(context, data));
-          break;
-        default:
-          utils.errorResponse({
-            error: `Invalid provider: ${event.provider}` },
-            providerConfig,
-            (err, data) => redirectProxyCallback(context, data)
-          );
-      }
-    })
-    .catch(error =>
-      utils.errorResponse(
-        { error },
-        providerConfig,
-        (err, data) => redirectProxyCallback(context, data)
-      ));
+  }
+  const providerConfig = config(event)
+  let data
+  try {
+    const state = await cache.createState()
+    switch (event.provider) {
+      case 'facebook':
+        data = facebook.signinHandler(providerConfig, {
+          scope: 'email',
+          state
+        })
+        break
+      case 'google':
+        data = google.signinHandler(providerConfig, {
+          scope: 'profile email',
+          state
+        })
+        break
+      case 'microsoft':
+        data = microsoft.signinHandler(providerConfig, {
+          scope: 'wl.basic wl.emails',
+          state
+        })
+        break
+      case 'custom-google':
+        // See ./customGoogle.js
+        data = customGoogle.signinHandler(providerConfig, { state })
+        break
+      default:
+        data = utils.errorResponse(
+          { error: `Invalid provider: ${event.provider}` },
+          providerConfig
+        )
+    }
+  } catch (exception) {
+    data = utils.errorResponse({ exception }, providerConfig)
+  }
+  return {
+    statusCode: 302,
+    headers: {
+      Location: data.url
+    }
+  }
 }
 
-exports = module.exports = signinHandler;
+module.exports = signinHandler

@@ -1,33 +1,118 @@
-'use strict';
+const { utils, config } = require('serverless-authentication')
+const AWS = require('aws-sdk')
+const nock = require('nock')
+const url = require('url')
+const refreshHandler = require('../authentication/lib/handlers/refreshHandler')
+const callbackHandler = require('../authentication/lib/handlers/callbackHandler')
+const signinHandler = require('../authentication/lib/handlers/signinHandler')
 
-const signinHandler = require('../authentication/lib/handlers/signinHandler');
-const callbackHandler = require('../authentication/lib/handlers/callbackHandler');
-const refreshHandler = require('../authentication/lib/handlers/refreshHandler');
-const slsAuth = require('serverless-authentication');
+jest.mock('aws-sdk', () => {
+  const mocks = {
+    getMock: jest.fn().mockResolvedValue({}),
+    putMock: jest.fn().mockResolvedValue({}),
+    queryMock: jest.fn().mockImplementation((params) => {
+      if (params.TableName === process.env.CACHE_DB_NAME) {
+        return Promise.resolve({
+          Items: [
+            {
+              token: process.env.STATE,
+              userId: 'mock-user'
+            }
+          ]
+        })
+      }
+      return Promise.reject(new Error('Invalid table'))
+    }),
+    updateMock: jest.fn().mockResolvedValue({}),
+    adminCreateUserMock: jest.fn().mockResolvedValue({}),
+    adminUpdateUserAttributesMock: jest.fn().mockResolvedValue({}),
+    adminGetUserMock: jest.fn().mockResolvedValue({})
+  }
 
-const utils = slsAuth.utils;
-const config = slsAuth.config;
+  const DocumentClient = {
+    get: (obj) => ({
+      promise: () => mocks.getMock(obj)
+    }),
+    put: (obj) => ({
+      promise: () => mocks.putMock(obj)
+    }),
+    query: (obj) => ({
+      promise: () => mocks.queryMock(obj)
+    }),
+    update: (obj) => ({
+      promise: () => mocks.updateMock(obj)
+    })
+  }
 
-const nock = require('nock');
-const expect = require('chai').expect;
-const url = require('url');
-const defaultEvent = require('./event.json');
+  const CognitoIdentityServiceProvider = {
+    adminCreateUser: (obj) => ({
+      promise: () => mocks.adminCreateUserMock(obj)
+    }),
+    adminUpdateUserAttributes: (obj) => ({
+      promise: () => mocks.adminUpdateUserAttributesMock(obj)
+    }),
+    adminGetUser: (obj) => ({
+      promise: () => mocks.adminGetUserMock(obj)
+    })
+  }
+
+  return {
+    mocks,
+    DynamoDB: {
+      DocumentClient: jest.fn().mockImplementation(() => DocumentClient)
+    },
+    CognitoIdentityServiceProvider: jest
+      .fn()
+      .mockImplementation(() => CognitoIdentityServiceProvider)
+  }
+})
+
+afterEach(() => {
+  AWS.mocks.getMock.mockClear()
+  AWS.mocks.putMock.mockClear()
+  AWS.mocks.queryMock.mockClear()
+  AWS.mocks.updateMock.mockClear()
+  AWS.mocks.adminCreateUserMock.mockClear()
+  AWS.mocks.adminUpdateUserAttributesMock.mockClear()
+  AWS.mocks.adminGetUserMock.mockClear()
+})
+
+afterAll(() => {
+  jest.restoreAllMocks()
+})
 
 describe('Authentication Provider', () => {
   describe('Google', () => {
-    before(() => {
-      const googleConfig = config(Object.assign({}, defaultEvent, { provider: 'google' }));
+    beforeAll(() => {
+      process.env.STAGE = 'dev'
+      process.env.CACHE_DB_NAME = 'dev-serverless-authentication-cache'
+      process.env.REDIRECT_CLIENT_URI = 'http://127.0.0.1:3000/'
+      process.env.TOKEN_SECRET = 'token-secret-123'
+      process.env.PROVIDER_GOOGLE_ID = 'g-mock-id'
+      process.env.PROVIDER_GOOGLE_SECRET = 'g-mock-secret'
+
+      const payload = {
+        client_id: 'g-mock-id',
+        redirect_uri:
+          'https://api-id.execute-api.eu-west-1.amazonaws.com/dev/authentication/callback/google',
+        client_secret: 'g-mock-secret',
+        code: 'code',
+        grant_type: 'authorization_code'
+      }
       nock('https://www.googleapis.com')
-        .post('/oauth2/v4/token')
-        .query({
-          client_id: googleConfig.id,
-          redirect_uri: googleConfig.redirect_uri,
-          client_secret: googleConfig.secret,
-          code: 'code'
-        })
+        .post(
+          '/oauth2/v4/token',
+          Object.keys(payload)
+            .reduce(
+              (result, key) =>
+                result.concat(`${key}=${encodeURIComponent(payload[key])}`),
+              []
+            )
+            .join('&')
+        )
         .reply(200, {
           access_token: 'access-token-123'
-        });
+        })
 
       nock('https://www.googleapis.com')
         .get('/plus/v1/people/me')
@@ -43,61 +128,77 @@ describe('Authentication Provider', () => {
           image: {
             url: 'https://avatars3.githubusercontent.com/u/4726921?v=3&s=460'
           }
-        });
-    });
+        })
+    })
 
-    let state = '';
-    let refreshToken = '';
+    let refreshToken = ''
 
-    it('should return oauth signin url', (done) => {
-      const event = Object.assign({}, defaultEvent, {
+    it('should return oauth signin url', async () => {
+      const event = {
         pathParameters: {
           provider: 'google'
+        },
+        requestContext: {
+          stage: 'dev'
+        },
+        headers: {
+          Host: 'api-id.execute-api.eu-west-1.amazonaws.com'
         }
-      });
+      }
 
-      signinHandler(event, { succeed: (data) => {
-        const query = url.parse(data.headers.Location, true).query;
-        state = query.state;
-        expect(data.headers.Location).to.match(/https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?client_id=g-mock-id&redirect_uri=https:\/\/api-id\.execute-api\.eu-west-1\.amazonaws\.com\/dev\/authentication\/callback\/google&response_type=code&scope=profile email&state=.{64}/);
-        done(null);
-      } });
-    });
+      const data = await signinHandler(event)
+      const { query } = url.parse(data.headers.Location, true)
+      const queryState = query.state
+      process.env.STATE = queryState
+      expect(data.headers.Location).toMatch(
+        /https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?client_id=g-mock-id&redirect_uri=https:\/\/api-id\.execute-api\.eu-west-1\.amazonaws\.com\/dev\/authentication\/callback\/google&response_type=code&scope=profile email&state=.{64}/
+      )
+    })
 
-    it('should return local client url', (done) => {
-      const event = Object.assign({}, defaultEvent, {
+    it('should return local client url', async () => {
+      const event = {
         pathParameters: {
           provider: 'google'
         },
         queryStringParameters: {
           code: 'code',
-          state
+          state: process.env.STATE
+        },
+        requestContext: {
+          stage: 'dev'
+        },
+        headers: {
+          Host: 'api-id.execute-api.eu-west-1.amazonaws.com'
         }
-      });
+      }
 
-      const providerConfig = config(event);
-      callbackHandler(event, { succeed: (data) => {
-        const query = url.parse(data.headers.Location, true).query;
-        refreshToken = query.refresh_token;
-        expect(query.authorization_token).to.match(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/);
-        expect(refreshToken).to.match(/[A-Fa-f0-9]{64}/);
-        const tokenData = utils.readToken(query.authorization_token, providerConfig.token_secret);
-        expect(tokenData.id)
-          .to.equal('59d694734e227742db6b6788bdbfb2e5fb5f866c1811fc4d8704aff012e69623');
-        done(null);
-      } });
-    });
+      const providerConfig = config(event)
+      const data = await callbackHandler(event)
+      const { query } = url.parse(data.headers.Location, true)
+      refreshToken = query.refresh_token
+      expect(query.authorization_token).toMatch(
+        /[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/
+      )
+      expect(refreshToken).toMatch(/[A-Fa-f0-9]{64}/)
+      const tokenData = utils.readToken(
+        query.authorization_token,
+        providerConfig.token_secret
+      )
+      expect(tokenData.id).toBe(
+        '59d694734e227742db6b6788bdbfb2e5fb5f866c1811fc4d8704aff012e69623'
+      )
+    })
 
-    it('should get new authorization token', () => {
+    it('should get new authorization token', async () => {
       const event = {
         refresh_token: refreshToken
-      };
-
-      refreshHandler(event, (error, data) => {
-        expect(error).to.be.null;
-        expect(data.authorization_token).to.match(/[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/);
-        expect(data.refresh_token).to.match(/[A-Fa-f0-9]{64}/);
-      });
-    });
-  });
-});
+      }
+      const data = await refreshHandler(event)
+      expect(data.authorization_token).toMatch(
+        /[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?/
+      )
+      expect(data.refresh_token).toMatch(/[A-Fa-f0-9]{64}/)
+      expect(data.id).toBe('mock-user')
+    })
+  })
+})

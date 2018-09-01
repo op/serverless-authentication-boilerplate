@@ -6,31 +6,33 @@
 
 This project is aimed to be a generic authentication boilerplate for the [Serverless framework](http://www.serverless.com).
 
-This boilerplate is compatible with the Serverless v.1.0.0, to install Serverless framework run `npm install -g serverless`.
+This boilerplate is compatible with the Serverless v.1.30.3+, to install Serverless framework run `npm install -g serverless`.
 
-Webapp demo that uses this boilerplate: http://laardee.github.io/serverless-authentication-gh-pages
+Web app demo that uses this boilerplate: http://laardee.github.io/serverless-authentication-gh-pages
 
 If you are using Serverless framework v.0.5, see branch https://github.com/laardee/serverless-authentication-boilerplate/tree/serverless-0.5
 
 ## Installation
 
-Installation will create one DynamoDB table for OAuth state and refresh tokens.
+The installation will create one DynamoDB table for OAuth state and refresh tokens.
 
 1. Run `serverless install --url https://github.com/laardee/serverless-authentication-boilerplate`, clone or download the repository
 2. Rename _example.env.yml_ in _authentication_ to _env.yml_ and set [environmental variables](#env-vars).
 3. Change directory to `authentication` and run `npm install`.
-4. Run `serverless deploy` on the authentication folder to deploy authentication service to AWS. Notice the arn of the authorize function.
-5. (optional) Change directory to test-token and insert the arn of the authorizer function to authorizer/arn in serverless.yml. Then run `serverless deploy` to deploy test-token service.
+4. Run `serverless deploy` on the authentication folder to deploy authentication service to AWS.
+5. (optional) Change directory and run `serverless deploy` to deploy test-token service.
 
 If you wish to change the cache db name, change `CACHE_DB_NAME ` in _.env_ file and `TableName` in _serverless.yml_ in Dynamo resource.
 
 ## Set up Authentication Provider Application Settings
 
-The redirect URI that needs to be defined in oauth provider's application settings is the callback endpoint of the API. For example if you use facebook login, the redirect URI is **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/facebook** and for google **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/google**.
+The redirect URI that needs to be defined in OAuth provider's application settings is the callback endpoint of the API. For example, if you use facebook login, the redirect URI is **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/facebook** and for google **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/google**.
+
+If you have a domain that you can use, the configuration is explained in the [custom domain name](#custom-domain) section.
 
 ## Services
 
-In this example project authentication and authorization services are separated from content API (test-token).
+In this example project authentication and authorization services are separated from the content API (test-token).
 
 ### Authentication
 
@@ -48,10 +50,8 @@ Functions:
   * endpoint: /authentication/refresh/{refresh_token}, returns new authentication token and refresh token
   * handler: function revokes refresh token
 * authentication/authorize
-  * endpoint: no end point
+  * endpoint: no endpoint
   * handler: is used by Api Gateway custom authorizer
-* authentication/schema
-  * invoke with `serverless invoke -f schema` to setup FaunaDB schema
 
 ### Test-token
 
@@ -61,34 +61,40 @@ Functions:
 
 * test-token/test-token
   * endpoint: /test-token
-  * handler: test-token function can be used to test custom authorizer, it returns principalId of custom authorizer policy. It is mapped as username in request template.
+  * handler: test-token function can be used to test custom authorizer, it returns principalId of custom authorizer policy. It is mapped as the username in request template.
 
 ## <a id="env-vars"></a>Environmental Variables
 
 Open `authentication/env.yml`, fill in what you use and other ones can be deleted.
 
-```
+```yaml
 dev:
 # General
   SERVICE: ${self:service}
   STAGE: ${opt:stage, self:provider.stage}
   REGION: ${opt:region, self:provider.region}
   REDIRECT_CLIENT_URI: http://127.0.0.1:3000/
+# Custom Redirect Domain
+# REDIRECT_DOMAIN_NAME: ${opt:stage, self:provider.stage}.my-custom-domain-for-callback.com
+# REDIRECT_CERTIFICATE_ARN: arn:aws:acm:us-east-1:111122223333:certificate/fb1b9770-a305-495d-aefb-27e5e101ff3
+# REDIRECT_URI: https://${self:provider.environment.REDIRECT_DOMAIN_NAME}/authentication/callback/{provider}
+# REDIRECT_HOSTED_ZONE_ID: XXXXXXXX
   TOKEN_SECRET: token-secret-123
 # Database
-  CACHE_DB_NAME: ${self:provider.environment.SERVICE}-cache-${self:provider.environment.STAGE}
-  USERS_DB_NAME: ${self:provider.environment.SERVICE}-users-${self:provider.environment.STAGE}
+  FAUNADB_SECRET: SERVER_SECRET_FOR_YOUR_FAUNADB_DATABASE
+  CACHE_DB_NAME: ${self:service}-cache-${opt:stage, self:provider.stage}
+  USERS_DB_NAME: ${self:service}-users-${opt:stage, self:provider.stage}
 # Cognito
   USER_POOL_ID: user-pool-id
 # Providers
-  PROVIDER_FACEBOOK_ID: fb-mock-id
-  PROVIDER_FACEBOOK_SECRET: fb-mock-secret
-  PROVIDER_GOOGLE_ID: g-mock-id
-  PROVIDER_GOOGLE_SECRET: cg-mock-secret
-  PROVIDER_MICROSOFT_ID: ms-mock-id
-  PROVIDER_MICROSOFT_SECRET: ms-mock-secret
-  PROVIDER_CUSTOM_GOOGLE_ID: g-mock-id
-  PROVIDER_CUSTOM_GOOGLE_SECRET: cg-mock-secret
+  PROVIDER_FACEBOOK_ID: "fb-mock-id"
+  PROVIDER_FACEBOOK_SECRET: "fb-mock-secret"
+  PROVIDER_GOOGLE_ID: "g-mock-id"
+  PROVIDER_GOOGLE_SECRET: "cg-mock-secret"
+  PROVIDER_MICROSOFT_ID: "ms-mock-id"
+  PROVIDER_MICROSOFT_SECRET: "ms-mock-secret"
+  PROVIDER_CUSTOM_GOOGLE_ID: "cg-mock-id"
+  PROVIDER_CUSTOM_GOOGLE_SECRET: "cg-mock-secret"
 ```
 
 ## Example Provider Packages
@@ -100,7 +106,7 @@ dev:
 
 ## <a id="custom-provider"></a>Custom Provider
 
-Package contains example [/authentication/lib/custom-google.js](https://github.com/laardee/serverless-authentication-boilerplate/blob/master/authentication/lib/custom-google.js) how to implement custom authentication provider using generic Provider class. To test custom provider go to http://laardee.github.io/serverless-authentication-gh-pages and click 'custom-google' button.
+Package contains example [/authentication/lib/custom-google.js](https://github.com/laardee/serverless-authentication-boilerplate/blob/master/authentication/lib/custom-google.js) how to implement a custom authentication provider using generic Provider class. To test custom provider go to http://laardee.github.io/serverless-authentication-gh-pages and click 'custom-google' button.
 
 ## User database
 
@@ -108,8 +114,8 @@ To use FaunaDB to save user data. First [create a database here](https://fauna.c
 
 1. configure `FAUNADB_SECRET` in `authentication/env.yml` with a server secret for your database
 2. uncomment `return faunaUser.saveUser(profile);` from `authentication/lib/storage/usersStorage.js`
-3. change the last line of  `authentication/lib/storage/cacheStorage.js` to `exports = module.exports = faunaCache;`
-4. Run `serverless deploy` and then `serverless invoke -f schema`
+3. change the last line of  `authentication/lib/storage/cacheStorage.js` to `module.exports = faunaCache;`
+4. Run `STAGE=dev npm run setup:fauna`
 
 To use DynamoBD to save user data:
 
@@ -122,8 +128,32 @@ To use Cognito User Pool as user database:
 2. copy user pool id to `authentication/env.yml`
 3. uncomment `return saveCognito(profile);` from `authentication/lib/storage/usersStorage.js`
 
-## Running Tests on Mac
+## <a id="custom-domain"></a>API Gateway Custom Domain Name
 
-* Install Docker and Docker Compose
+If you have a domain, a hosted zone, and a certificate for the domain defined in your AWS account, you may use API Gateway Custom Domain Name in your setup.
+
+Your domain name goes to the `REDIRECT_DOMAIN_NAME` environment variable, if this is set, CloudFormation will create a custom domain name to API Gateway and recordset to the Route 53
+```yaml
+REDIRECT_DOMAIN_NAME: "authentication.my-domain.com"
+```
+
+Certificate ARN for your domain,
+```yaml
+REDIRECT_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:111122223333:certificate/fb1b9770-a305-495d-aefb-27e5e101ff3"
+```
+
+Callback path, leave this like it is
+```yaml
+REDIRECT_URI: "https://${self:provider.environment.REDIRECT_DOMAIN_NAME}/authentication/callback/{provider}"
+```
+
+Route 53 hosted zone id, go to Route 53 and get the id from there or with CLI `aws route53 list-hosted-zones --query 'HostedZones[*].[Name,Id]' --output text`. The CLI will output something like this `authentication.my-domain.com.     /hostedzone/Z10QEETUEETUAO` copy the `Z10QEETUEETUAO` part to the `REDIRECT_HOSTED_ZONE_ID` environment variable.
+
+```yaml
+REDIRECT_HOSTED_ZONE_ID: "Z10QEETUEETUAO"
+````
+
+## Running Tests
+
 * Run `npm install` in project root directory
-* Run ./run-tests.sh
+* Run `npm test`

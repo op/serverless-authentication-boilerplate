@@ -1,28 +1,32 @@
-'use strict';
-
-const table = process.env.USERS_DB_NAME;
-
-// Common
-const AWS = require('aws-sdk');
+const AWS = require('aws-sdk')
 
 const config = {
-  region: AWS.config.region || process.env.REGION || 'eu-west-1',
-};
-
-if (process.env.LOCAL_DDB_ENDPOINT) {
-  Object.assign(config, { endpoint: process.env.LOCAL_DDB_ENDPOINT });
+  region: process.env.REGION || 'eu-west-1'
 }
 
-const dynamodb = new AWS.DynamoDB.DocumentClient(config);
+const dynamodb = new AWS.DynamoDB.DocumentClient(config)
 
-const saveUser = (profile) => {
+// empty strings cannot be saved to dynamo
+const sanitize = (obj) => {
+  const clone = Object.assign({}, obj)
+  Object.keys(clone).forEach((key) => {
+    if (key === '_raw') {
+      clone[key] = sanitize(clone[key])
+    } else if (clone[key] === '' || clone[key] === undefined) {
+      delete clone[key]
+    }
+  })
+  return clone
+}
+
+const saveUser = async (profile) => {
   const params = {
-    TableName: table,
-    Item: profile
-  };
-  return dynamodb.put(params).promise();
-};
+    TableName: process.env.USERS_DB_NAME,
+    Item: sanitize(profile)
+  }
+  return dynamodb.put(params).promise()
+}
 
 module.exports = {
   saveUser
-};
+}

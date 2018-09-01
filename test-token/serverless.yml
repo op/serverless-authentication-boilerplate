@@ -4,7 +4,7 @@ provider:
   name: aws
   stage: dev
   region: us-east-1
-  runtime: nodejs4.3
+  runtime: nodejs8.10
 
 functions:
   testToken:
@@ -24,7 +24,7 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
           authorizer:
-            arn: replace-with-arn-of-the-authorizer-function
+            arn: ${ssm:/authentication/${opt:stage, self:provider.stage}/authorization-function-arn}
             resultTtlInSeconds: 0
             identitySource: method.request.header.Authorization
             identityValidationExpression: .*

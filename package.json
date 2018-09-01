@@ -2,7 +2,7 @@
   "name": "serverless-authentication-boilerplate",
   "version": "1.0.0",
   "description": "Boilerplate for Serverless Authentication",
-  "author": "Eetu Tuomala <eetu.tuomala@sc5.io>",
+  "author": "Eetu Tuomala (https://laardee.com)",
   "license": "MIT",
   "private": false,
   "repository": {
@@ -16,30 +16,28 @@
     "lambda"
   ],
   "devDependencies": {
-    "async": "^2.0.0-rc.3",
-    "aws-sdk": "^2.2.48",
-    "chai": "^3.5.0",
-    "dirty-chai": "^1.2.2",
-    "dotenv": "^2.0.0",
-    "eslint": "^3.17.1",
-    "eslint-config-airbnb": "^14.1.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.0",
-    "js-yaml": "^3.6.1",
-    "log4js": "^1.1.1",
-    "mocha": "^2.4.5",
-    "nock": "^7.7.2",
-    "serverless-authentication": "^0.4.4"
+    "aws-sdk": "^2.302.0",
+    "dotenv": "^6.0.0",
+    "eslint": "^5.4.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.1",
+    "eslint-plugin-react": "^7.11.1",
+    "jest": "^23.5.0",
+    "log4js": "^3.0.5",
+    "nock": "^9.6.1",
+    "serverless-authentication": "^0.6.3"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint .",
-    "test": "./run-tests.sh",
+    "lint": "eslint . --fix",
+    "test": "jest .",
     "install-dependencies": "npm run install-authentication && npm run install-test-token",
     "install-authentication": "cd authentication && npm install",
     "install-test-token": "cd test-token && npm install",
     "deploy-authentication": "cd authentication && serverless deploy",
     "deploy-test-token": "cd test-token && serverless deploy",
-    "deploy": "npm run deploy-authentication && npm run deploy-test-token"
-  }
+    "deploy": "npm run deploy-authentication && npm run deploy-test-token",
+    "setup:fauna": "node authentication/lib/storage/fauna/faunaSetupSchema.js"
+  },
+  "dependencies": {}
 }
