@@ -15,7 +15,7 @@ function hash() {
 /**
  * Creates OAuth State
  */
-const createState = () => {
+const createState = async () => {
   const state = hash()
   const params = {
     TableName: process.env.CACHE_DB_NAME,
@@ -35,8 +35,8 @@ const createState = () => {
  * Revokes OAuth State
  * @param state
  */
-const revokeState = (state) => new Promise((resolve, reject) => {
-  const queryToken = () => {
+const revokeState = async (state) => new Promise((resolve, reject) => {
+  const queryToken = async () => {
     const params = {
       TableName: process.env.CACHE_DB_NAME,
       ProjectionExpression: '#token, #type, Expired',
@@ -55,7 +55,7 @@ const revokeState = (state) => new Promise((resolve, reject) => {
       .query(params).promise()
   }
 
-  const insertToken = (data) => {
+  const insertToken = async (data) => {
     const item = data.Items[0]
     if (item.expired) {
       throw new Error('State expired')
@@ -90,7 +90,7 @@ const revokeState = (state) => new Promise((resolve, reject) => {
  * Creates and saves refresh token
  * @param user
  */
-const saveRefreshToken = (user, payload) => {
+const saveRefreshToken = async (user, payload) => {
   const token = hash()
   const params = {
     TableName: process.env.CACHE_DB_NAME,
@@ -112,7 +112,7 @@ const saveRefreshToken = (user, payload) => {
  * Revokes old refresh token and creates new
  * @param oldToken
  */
-const revokeRefreshToken = (oldToken) => new Promise((resolve, reject) => {
+const revokeRefreshToken = async (oldToken) => new Promise((resolve, reject) => {
   if (oldToken.match(/[A-Fa-f0-9]{64}/)) {
     const token = hash()
 
@@ -136,7 +136,7 @@ const revokeRefreshToken = (oldToken) => new Promise((resolve, reject) => {
         .query(params).promise()
     }
 
-    const newRefreshToken = (data) => {
+    const newRefreshToken = async (data) => {
       const { userId, payload } = data.Items[0]
 
       const params = {
@@ -155,7 +155,7 @@ const revokeRefreshToken = (oldToken) => new Promise((resolve, reject) => {
         .then(() => userId)
     }
 
-    const expireRefreshToken = (userId) => {
+    const expireRefreshToken = async (userId) => {
       const params = {
         TableName: process.env.CACHE_DB_NAME,
         Item: {

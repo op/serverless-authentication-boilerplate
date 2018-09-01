@@ -7,7 +7,7 @@ const cognitoUser = require('./cognito/cognitoUser')
 const dynamoUser = require('./dynamo/dynamoUser')
 const faunaUser = require('./fauna/faunaUser')
 
-const saveUser = (profile) => {
+const saveUser = async (profile) => {
   if (!profile) {
     return Promise.reject(new Error('Invalid profile'))
   }
@@ -17,10 +17,10 @@ const saveUser = (profile) => {
   // profile class: https://github.com/laardee/serverless-authentication/blob/master/src/profile.js
 
   // to enable FaunaDB as a user database enable
-  // return faunaUser.saveUser(profile);
+  // return faunaUser.saveUser(profile)
 
   // to use dynamo as user database enable
-  // return dynamoUser.saveUser(profile);
+  // return dynamoUser.saveUser(profile)
 
   // to use cognito user pool as user database enable
   // return cognitoUser.saveOrUpdateUser(profile);

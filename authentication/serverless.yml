@@ -113,19 +113,21 @@ resources:
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.CACHE_DB_NAME}
 
-#    UsersTable:
-#      Type: AWS::DynamoDB::Table
-#      Properties:
-#        AttributeDefinitions:
-#        - AttributeName: userId
-#          AttributeType: S
-#        KeySchema:
-#        - AttributeName: userId
-#          KeyType: HASH
-#        ProvisionedThroughput:
-#          ReadCapacityUnits: 1
-#          WriteCapacityUnits: 1
-#        TableName: ${self:provider.environment.USERS_DB_NAME}
+    # UsersTable:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     SSESpecification:
+    #       SSEEnabled: true
+    #     AttributeDefinitions:
+    #     - AttributeName: userId
+    #       AttributeType: S
+    #     KeySchema:
+    #     - AttributeName: userId
+    #       KeyType: HASH
+    #     ProvisionedThroughput:
+    #       ReadCapacityUnits: 1
+    #       WriteCapacityUnits: 1
+    #     TableName: ${self:provider.environment.USERS_DB_NAME}
 
 # API Gateway Custom domain is created if "REDIRECT_DOMAIN_NAME" is defined in the env.yml
     RedirectDomainName:

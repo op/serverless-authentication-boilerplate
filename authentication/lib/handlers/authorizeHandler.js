@@ -1,5 +1,3 @@
-
-
 // Config
 const { config, utils } = require('serverless-authentication')
 
