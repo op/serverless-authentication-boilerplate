@@ -6,31 +6,33 @@
 
 This project is aimed to be a generic authentication boilerplate for the [Serverless framework](http://www.serverless.com).
 
-This boilerplate is compatible with the Serverless v.1.0.0, to install Serverless framework run `npm install -g serverless`.
+This boilerplate is compatible with the Serverless v.1.30.3+, to install Serverless framework run `npm install -g serverless`.
 
-Webapp demo that uses this boilerplate: http://laardee.github.io/serverless-authentication-gh-pages
+Web app demo that uses this boilerplate: http://laardee.github.io/serverless-authentication-gh-pages
 
 If you are using Serverless framework v.0.5, see branch https://github.com/laardee/serverless-authentication-boilerplate/tree/serverless-0.5
 
 ## Installation
 
-Installation will create one DynamoDB table for OAuth state and refresh tokens.
+The installation will create one DynamoDB table for OAuth state and refresh tokens.
 
 1. Run `serverless install --url https://github.com/laardee/serverless-authentication-boilerplate`, clone or download the repository
 2. Rename _example.env.yml_ in _authentication_ to _env.yml_ and set [environmental variables](#env-vars).
 3. Change directory to `authentication` and run `npm install`.
-4. Run `serverless deploy` on the authentication folder to deploy authentication service to AWS. Notice the arn of the authorize function.
+4. Run `serverless deploy` on the authentication folder to deploy authentication service to AWS.
 5. (optional) Change directory and run `serverless deploy` to deploy test-token service.
 
 If you wish to change the cache db name, change `CACHE_DB_NAME ` in _.env_ file and `TableName` in _serverless.yml_ in Dynamo resource.
 
 ## Set up Authentication Provider Application Settings
 
-The redirect URI that needs to be defined in oauth provider's application settings is the callback endpoint of the API. For example if you use facebook login, the redirect URI is **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/facebook** and for google **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/google**.
+The redirect URI that needs to be defined in OAuth provider's application settings is the callback endpoint of the API. For example, if you use facebook login, the redirect URI is **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/facebook** and for google **https://API-ID.execute-api.us-east-1.amazonaws.com/dev/authentication/callback/google**.
+
+If you have a domain that you can use, the configuration is explained in the [custom domain name](#custom-domain) section.
 
 ## Services
 
-In this example project authentication and authorization services are separated from content API (test-token).
+In this example project authentication and authorization services are separated from the content API (test-token).
 
 ### Authentication
 
@@ -48,7 +50,7 @@ Functions:
   * endpoint: /authentication/refresh/{refresh_token}, returns new authentication token and refresh token
   * handler: function revokes refresh token
 * authentication/authorize
-  * endpoint: no end point
+  * endpoint: no endpoint
   * handler: is used by Api Gateway custom authorizer
 
 ### Test-token
@@ -59,7 +61,7 @@ Functions:
 
 * test-token/test-token
   * endpoint: /test-token
-  * handler: test-token function can be used to test custom authorizer, it returns principalId of custom authorizer policy. It is mapped as username in request template.
+  * handler: test-token function can be used to test custom authorizer, it returns principalId of custom authorizer policy. It is mapped as the username in request template.
 
 ## <a id="env-vars"></a>Environmental Variables
 
@@ -104,7 +106,7 @@ dev:
 
 ## <a id="custom-provider"></a>Custom Provider
 
-Package contains example [/authentication/lib/custom-google.js](https://github.com/laardee/serverless-authentication-boilerplate/blob/master/authentication/lib/custom-google.js) how to implement custom authentication provider using generic Provider class. To test custom provider go to http://laardee.github.io/serverless-authentication-gh-pages and click 'custom-google' button.
+Package contains example [/authentication/lib/custom-google.js](https://github.com/laardee/serverless-authentication-boilerplate/blob/master/authentication/lib/custom-google.js) how to implement a custom authentication provider using generic Provider class. To test custom provider go to http://laardee.github.io/serverless-authentication-gh-pages and click 'custom-google' button.
 
 ## User database
 
@@ -126,11 +128,11 @@ To use Cognito User Pool as user database:
 2. copy user pool id to `authentication/env.yml`
 3. uncomment `return saveCognito(profile);` from `authentication/lib/storage/usersStorage.js`
 
-## Api Gateway Custom Domain Name
+## <a id="custom-domain"></a>API Gateway Custom Domain Name
 
 If you have a domain, a hosted zone, and a certificate for the domain defined in your AWS account, you may use API Gateway Custom Domain Name in your setup.
 
-You domain name goes to the `REDIRECT_DOMAIN_NAME` environment variable, if this is set, CloudFormation will create a custom domain name to API Gateway and recordset to the Route 53
+Your domain name goes to the `REDIRECT_DOMAIN_NAME` environment variable, if this is set, CloudFormation will create a custom domain name to API Gateway and recordset to the Route 53
 ```yaml
 REDIRECT_DOMAIN_NAME: "authentication.my-domain.com"
 ```
@@ -145,7 +147,7 @@ Callback path, leave this like it is
 REDIRECT_URI: "https://${self:provider.environment.REDIRECT_DOMAIN_NAME}/authentication/callback/{provider}"
 ```
 
-Route 53 hosted zone id, go to Route 53 and get id from there or with cli `aws route53 list-hosted-zones --query 'HostedZones[*].[Name,Id]' --output text`. The cli will output something like this `authentication.my-domain.com.     /hostedzone/Z10QEETUEETUAO` copy the `Z10QEETUEETUAO` part to the `REDIRECT_HOSTED_ZONE_ID` environment variable.
+Route 53 hosted zone id, go to Route 53 and get the id from there or with CLI `aws route53 list-hosted-zones --query 'HostedZones[*].[Name,Id]' --output text`. The CLI will output something like this `authentication.my-domain.com.     /hostedzone/Z10QEETUEETUAO` copy the `Z10QEETUEETUAO` part to the `REDIRECT_HOSTED_ZONE_ID` environment variable.
 
 ```yaml
 REDIRECT_HOSTED_ZONE_ID: "Z10QEETUEETUAO"
