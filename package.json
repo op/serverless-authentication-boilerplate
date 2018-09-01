@@ -36,7 +36,8 @@
     "install-test-token": "cd test-token && npm install",
     "deploy-authentication": "cd authentication && serverless deploy",
     "deploy-test-token": "cd test-token && serverless deploy",
-    "deploy": "npm run deploy-authentication && npm run deploy-test-token"
+    "deploy": "npm run deploy-authentication && npm run deploy-test-token",
+    "setup:fauna": "node authentication/lib/storage/fauna/faunaSetupSchema.js"
   },
   "dependencies": {}
 }

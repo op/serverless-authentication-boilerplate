@@ -24,7 +24,7 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
           authorizer:
-            arn: replace-with-arn-of-the-authorizer-function
+            arn: ${ssm:/authentication/${opt:stage, self:provider.stage}/authorization-function-arn}
             resultTtlInSeconds: 0
             identitySource: method.request.header.Authorization
             identityValidationExpression: .*

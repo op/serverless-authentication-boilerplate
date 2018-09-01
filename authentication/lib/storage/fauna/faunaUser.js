@@ -25,31 +25,6 @@ const saveUser = (profile) => {
       .then((key) => ({ faunadb: key.secret })))
 }
 
-// call this with `serverless invoke -f schema` before anything else
-const setupSchema = () => client.query(q.CreateClass({ name: 'auth_cache' }))
-  .then(() => client.query(q.Create(q.Ref('indexes'), {
-    name: 'auth_cache',
-    source: q.Class('auth_cache'),
-    terms: [{ field: [ 'data', 'token' ] }],
-    unique: true
-  })))
-  .then(() => client.query(q.CreateClass({ name: userClassName })))
-  .then(() => client.query(q.Create(q.Ref('indexes'), {
-    name: 'auth_userId',
-    source: q.Class(userClassName),
-    terms: [{ field: [ 'data', 'userId' ] }],
-    unique: true
-  })))
-  .then(() => client.query(q.Create(q.Ref('indexes'), {
-    // this index is optional but useful in development for browsing users
-    name: `all_${userClassName}`,
-    source: q.Class(userClassName)
-  })))
-
-const setupSchemaHandler = (event, callback) => setupSchema()
-  .then((result) => callback(null, result))
-  .catch((error) => callback(new Error(JSON.stringify(error))))
-
 module.exports = {
-  saveUser, setupSchemaHandler
+  saveUser
 }
