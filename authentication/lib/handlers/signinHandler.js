@@ -55,7 +55,7 @@ async function signinHandler(proxyEvent) {
         )
     }
   } catch (exception) {
-    data = utils.errorResponse({ exception }, providerConfig)
+    data = utils.errorResponse({ error: exception }, providerConfig)
   }
   return {
     statusCode: 302,
